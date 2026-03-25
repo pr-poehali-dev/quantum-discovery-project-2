@@ -1,611 +1,450 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import Icon from "@/components/ui/icon";
+import { categories, type Category, type Question } from "@/data/gameData";
 
-const CATEGORIES = [
-  { id: "strategy", name: "Стратегия", color: "#6366f1", icon: "Target" },
-  { id: "leadership", name: "Лидерство", color: "#f59e0b", icon: "Crown" },
-  { id: "processes", name: "Процессы", color: "#10b981", icon: "Settings" },
-  { id: "finance", name: "Финансы", color: "#3b82f6", icon: "TrendingUp" },
-  { id: "marketing", name: "Маркетинг", color: "#ec4899", icon: "Megaphone" },
-  { id: "hr", name: "Персонал", color: "#f97316", icon: "Users" },
-];
-
-const QUESTIONS: Record<string, { question: string; options: string[]; answer: string }[]> = {
-  strategy: [
-    {
-      question: "Какой инструмент стратегического анализа оценивает сильные и слабые стороны компании, а также возможности и угрозы?",
-      options: ["а) PEST-анализ", "б) SWOT-анализ", "в) Porter's Five Forces", "г) BCG-матрица"],
-      answer: "б) SWOT-анализ",
-    },
-    {
-      question: "Как называется стратегия, при которой компания стремится занять позицию с наименьшими издержками в отрасли?",
-      options: ["а) Дифференциация", "б) Фокусирование", "в) Лидерство по издержкам", "г) Диверсификация"],
-      answer: "в) Лидерство по издержкам",
-    },
-    {
-      question: "Что такое «голубой океан» в стратегии бизнеса?",
-      options: ["а) Рынок с высокой конкуренцией", "б) Новое рыночное пространство без конкурентов", "в) Международный рынок", "г) Рынок предметов роскоши"],
-      answer: "б) Новое рыночное пространство без конкурентов",
-    },
-    {
-      question: "Что означает термин «вертикальная интеграция»?",
-      options: ["а) Слияние конкурентов", "б) Выход на новые рынки", "в) Контроль над цепочкой поставок вверх или вниз", "г) Международное расширение"],
-      answer: "в) Контроль над цепочкой поставок вверх или вниз",
-    },
-  ],
-  leadership: [
-    {
-      question: "Какой стиль руководства предполагает полную передачу полномочий сотрудникам без вмешательства руководителя?",
-      options: ["а) Авторитарный", "б) Демократический", "в) Транзакционный", "г) Попустительский (Laissez-faire)"],
-      answer: "г) Попустительский (Laissez-faire)",
-    },
-    {
-      question: "Как называется лидерство, основанное на вдохновении и трансформации ценностей команды?",
-      options: ["а) Транзакционное", "б) Трансформационное", "в) Директивное", "г) Харизматическое"],
-      answer: "б) Трансформационное",
-    },
-    {
-      question: "Что такое эмоциональный интеллект (EQ) в контексте лидерства?",
-      options: ["а) Уровень IQ руководителя", "б) Способность распознавать и управлять эмоциями", "в) Техническая компетентность", "г) Умение делегировать"],
-      answer: "б) Способность распознавать и управлять эмоциями",
-    },
-    {
-      question: "Что такое «ситуационное лидерство» по Херси и Бланшару?",
-      options: ["а) Лидерство в кризисных ситуациях", "б) Адаптация стиля руководства под уровень зрелости сотрудника", "в) Управление в условиях неопределённости", "г) Руководство удалёнными командами"],
-      answer: "б) Адаптация стиля руководства под уровень зрелости сотрудника",
-    },
-  ],
-  processes: [
-    {
-      question: "Что обозначает методология Lean в управлении процессами?",
-      options: ["а) Ускоренный рост", "б) Устранение потерь и повышение ценности для клиента", "в) Снижение численности персонала", "г) Автоматизация производства"],
-      answer: "б) Устранение потерь и повышение ценности для клиента",
-    },
-    {
-      question: "Что такое KPI?",
-      options: ["а) Ключевые показатели эффективности", "б) Корпоративные принципы инвестирования", "в) Квалификационные показатели исполнения", "г) Критерии продуктивности интеграции"],
-      answer: "а) Ключевые показатели эффективности",
-    },
-    {
-      question: "Что означает цикл PDCA в управлении качеством?",
-      options: ["а) Планирование, Действие, Контроль, Анализ", "б) Планируй, Делай, Проверяй, Действуй", "в) Подготовка, Данные, Коммуникация, Адаптация", "г) Процесс, Диагностика, Коррекция, Аудит"],
-      answer: "б) Планируй, Делай, Проверяй, Действуй",
-    },
-    {
-      question: "Что такое «узкое место» (bottleneck) в теории ограничений Голдратта?",
-      options: ["а) Самый дорогой ресурс", "б) Ресурс, ограничивающий пропускную способность системы", "в) Неэффективный сотрудник", "г) Проблемный клиент"],
-      answer: "б) Ресурс, ограничивающий пропускную способность системы",
-    },
-  ],
-  finance: [
-    {
-      question: "Что такое EBITDA?",
-      options: ["а) Чистая прибыль компании", "б) Прибыль до вычета процентов, налогов, амортизации", "в) Общая выручка компании", "г) Рентабельность капитала"],
-      answer: "б) Прибыль до вычета процентов, налогов, амортизации",
-    },
-    {
-      question: "Что показывает коэффициент текущей ликвидности?",
-      options: ["а) Рентабельность продаж", "б) Способность компании покрыть краткосрочные обязательства оборотными активами", "в) Уровень долговой нагрузки", "г) Скорость оборота капитала"],
-      answer: "б) Способность компании покрыть краткосрочные обязательства оборотными активами",
-    },
-    {
-      question: "Что такое NPV (чистая приведённая стоимость)?",
-      options: ["а) Сумма всех доходов проекта", "б) Разница между дисконтированными доходами и расходами проекта", "в) Норма прибыли на инвестиции", "г) Срок окупаемости проекта"],
-      answer: "б) Разница между дисконтированными доходами и расходами проекта",
-    },
-    {
-      question: "Что означает термин «точка безубыточности»?",
-      options: ["а) Максимальная прибыль компании", "б) Объём продаж, при котором выручка покрывает все затраты", "в) Минимальный уровень рентабельности", "г) Момент возврата инвестиций"],
-      answer: "б) Объём продаж, при котором выручка покрывает все затраты",
-    },
-  ],
-  marketing: [
-    {
-      question: "Что такое «маркетинг-микс 4P»?",
-      options: ["а) Продукт, Цена, Место, Продвижение", "б) Персонал, Процесс, Прибыль, Позиционирование", "в) Продажи, Партнёры, Площадки, Программы", "г) Производство, Поставки, Покупатели, Прибыль"],
-      answer: "а) Продукт, Цена, Место, Продвижение",
-    },
-    {
-      question: "Что такое NPS (Net Promoter Score)?",
-      options: ["а) Показатель прибыльности клиента", "б) Индекс потребительской лояльности", "в) Стоимость привлечения клиента", "г) Охват рекламной кампании"],
-      answer: "б) Индекс потребительской лояльности",
-    },
-    {
-      question: "Что такое «воронка продаж»?",
-      options: ["а) Схема логистики товара", "б) Модель пути клиента от знакомства до покупки", "в) Инструмент ценообразования", "г) Метод сегментации рынка"],
-      answer: "б) Модель пути клиента от знакомства до покупки",
-    },
-    {
-      question: "Что означает аббревиатура B2B?",
-      options: ["а) Бизнес для банков", "б) Бизнес для бизнеса", "в) Бренд для покупателей", "г) Бюджет для брендинга"],
-      answer: "б) Бизнес для бизнеса",
-    },
-  ],
-  hr: [
-    {
-      question: "Что такое онбординг?",
-      options: ["а) Увольнение сотрудников", "б) Процесс адаптации новых сотрудников в компании", "в) Оценка персонала", "г) Система мотивации"],
-      answer: "б) Процесс адаптации новых сотрудников в компании",
-    },
-    {
-      question: "Что такое «оценка 360 градусов»?",
-      options: ["а) Аттестация только руководителем", "б) Комплексная оценка сотрудника от всех: коллег, подчинённых, руководителя, самооценка", "в) Ежеквартальный анализ KPI", "г) Внешний аудит персонала"],
-      answer: "б) Комплексная оценка сотрудника от всех: коллег, подчинённых, руководителя, самооценка",
-    },
-    {
-      question: "Что означает термин «текучесть кадров»?",
-      options: ["а) Повышение производительности персонала", "б) Соотношение уволившихся сотрудников к среднесписочной численности", "в) Процент обученных сотрудников", "г) Скорость найма новых специалистов"],
-      answer: "б) Соотношение уволившихся сотрудников к среднесписочной численности",
-    },
-    {
-      question: "Что такое грейдирование должностей в HR?",
-      options: ["а) Система аттестации руководителей", "б) Структурирование должностей по уровням с привязкой к оплате труда", "в) Программа обучения сотрудников", "г) Метод подбора персонала"],
-      answer: "б) Структурирование должностей по уровням с привязкой к оплате труда",
-    },
-  ],
-};
-
-type GameState = "start" | "setup" | "board" | "question" | "result";
-
-interface Team {
+type Team = {
   name: string;
   score: number;
-}
+};
 
-interface AnsweredQuestion {
-  category: string;
-  index: number;
-}
+type GameState = "start" | "setup" | "board" | "question" | "answer" | "results";
+
+const TEAM_COLORS = [
+  { bg: "bg-indigo-500", light: "bg-indigo-100", text: "text-indigo-700", border: "border-indigo-400" },
+  { bg: "bg-amber-500", light: "bg-amber-100", text: "text-amber-700", border: "border-amber-400" },
+  { bg: "bg-emerald-500", light: "bg-emerald-100", text: "text-emerald-700", border: "border-emerald-400" },
+  { bg: "bg-rose-500", light: "bg-rose-100", text: "text-rose-700", border: "border-rose-400" },
+];
 
 export default function ManagementGame() {
   const [gameState, setGameState] = useState<GameState>("start");
-  const [setupOpen, setSetupOpen] = useState(false);
-  const [teamNames, setTeamNames] = useState(["", "", "", ""]);
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [answeredQuestions, setAnsweredQuestions] = useState<AnsweredQuestion[]>([]);
-  const [activeQuestion, setActiveQuestion] = useState<{ category: string; index: number } | null>(null);
+  const [teams, setTeams] = useState<Team[]>([
+    { name: "", score: 0 },
+    { name: "", score: 0 },
+    { name: "", score: 0 },
+    { name: "", score: 0 },
+  ]);
+  const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(new Set());
+  const [activeQuestion, setActiveQuestion] = useState<{
+    category: Category;
+    question: Question;
+  } | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [showCorrect, setShowCorrect] = useState(false);
+  const [showResult, setShowResult] = useState(false);
   const [scoringTeam, setScoringTeam] = useState<number | null>(null);
 
-  const handleStartClick = () => {
-    setSetupOpen(true);
+  const allAnswered = answeredQuestions.size === categories.reduce((a, c) => a + c.questions.length, 0);
+
+  const handleStartGame = () => {
+    setGameState("setup");
   };
 
-  const handleSetupConfirm = () => {
-    const filledTeams = teamNames
-      .filter((n) => n.trim())
-      .map((n) => ({ name: n.trim(), score: 0 }));
-    if (filledTeams.length < 2) return;
-    setTeams(filledTeams);
-    setSetupOpen(false);
+  const handleBeginGame = () => {
+    const filled = teams.filter((t) => t.name.trim() !== "");
+    if (filled.length < 2) return;
     setGameState("board");
   };
 
-  const isAnswered = (category: string, index: number) =>
-    answeredQuestions.some((q) => q.category === category && q.index === index);
-
-  const handleQuestionClick = (category: string, index: number) => {
-    if (isAnswered(category, index)) return;
-    setActiveQuestion({ category, index });
+  const handleSelectQuestion = (category: Category, question: Question) => {
+    if (answeredQuestions.has(question.id)) return;
+    setActiveQuestion({ category, question });
     setSelectedAnswer(null);
-    setShowCorrect(false);
+    setShowResult(false);
     setScoringTeam(null);
     setGameState("question");
   };
 
-  const handleAnswer = (option: string) => {
-    if (showCorrect) return;
-    setSelectedAnswer(option);
-    setShowCorrect(true);
+  const handleSelectAnswer = (label: string) => {
+    if (selectedAnswer !== null) return;
+    setSelectedAnswer(label);
+    setShowResult(true);
   };
 
-  const handleScoreTeam = (teamIndex: number) => {
-    if (!activeQuestion) return;
-    const correct = QUESTIONS[activeQuestion.category][activeQuestion.index].answer;
-    if (selectedAnswer === correct) {
-      setTeams((prev) =>
-        prev.map((t, i) => (i === teamIndex ? { ...t, score: t.score + 200 } : t))
-      );
-    }
+  const handleAwardPoints = (teamIndex: number) => {
+    if (scoringTeam !== null || !activeQuestion) return;
     setScoringTeam(teamIndex);
+    setTeams((prev) =>
+      prev.map((t, i) =>
+        i === teamIndex ? { ...t, score: t.score + activeQuestion.question.points } : t
+      )
+    );
   };
 
   const handleCloseQuestion = () => {
     if (activeQuestion) {
-      setAnsweredQuestions((prev) => [...prev, activeQuestion]);
+      setAnsweredQuestions((prev) => new Set([...prev, activeQuestion.question.id]));
     }
     setActiveQuestion(null);
-    setGameState("board");
-
-    const totalQuestions = Object.values(QUESTIONS).reduce((sum, qs) => sum + qs.length, 0);
-    const newAnswered = answeredQuestions.length + 1;
-    if (newAnswered >= totalQuestions) {
-      setTimeout(() => setGameState("result"), 300);
-    }
+    setGameState(allAnswered ? "results" : "board");
   };
 
-  const resetGame = () => {
+  const handleRestart = () => {
     setGameState("start");
-    setTeams([]);
-    setTeamNames(["", "", "", ""]);
-    setAnsweredQuestions([]);
+    setTeams([
+      { name: "", score: 0 },
+      { name: "", score: 0 },
+      { name: "", score: 0 },
+      { name: "", score: 0 },
+    ]);
+    setAnsweredQuestions(new Set());
     setActiveQuestion(null);
     setSelectedAnswer(null);
-    setShowCorrect(false);
+    setShowResult(false);
     setScoringTeam(null);
   };
 
-  const currentQuestion =
-    activeQuestion ? QUESTIONS[activeQuestion.category][activeQuestion.index] : null;
-  const correctAnswer = currentQuestion?.answer;
+  const sortedTeams = [...teams]
+    .map((t, i) => ({ ...t, originalIndex: i }))
+    .filter((t) => t.name.trim() !== "")
+    .sort((a, b) => b.score - a.score);
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
-      style={{
-        background: "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)",
-      }}
-    >
-      {/* Фоновые элементы */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full opacity-10"
-            style={{
-              width: Math.random() * 300 + 50,
-              height: Math.random() * 300 + 50,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              background: CATEGORIES[i % CATEGORIES.length].color,
-              filter: "blur(80px)",
-            }}
-            animate={{ scale: [1, 1.2, 1], opacity: [0.05, 0.15, 0.05] }}
-            transition={{ duration: 6 + i * 0.5, repeat: Infinity }}
-          />
-        ))}
-      </div>
-
+    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
       <AnimatePresence mode="wait">
-        {/* СТАРТОВЫЙ ЭКРАН */}
         {gameState === "start" && (
           <motion.div
             key="start"
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="text-center z-10 px-6"
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="flex-1 flex flex-col items-center justify-center px-4"
           >
+            <motion.h1
+              initial={{ y: -30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="text-6xl font-black tracking-tight mb-4 text-center"
+            >
+              <span className="text-indigo-400">МЕН</span>
+              <span className="text-white">ЕДЖМЕНТ</span>
+            </motion.h1>
+            <motion.p
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-gray-400 text-xl mb-12 text-center"
+            >
+              Командная игра-викторина по управлению бизнесом
+            </motion.p>
             <motion.div
-              animate={{ rotate: [0, 5, -5, 0] }}
-              transition={{ duration: 4, repeat: Infinity }}
-              className="text-8xl mb-6"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="grid grid-cols-3 gap-4 mb-12"
             >
-              🏆
+              {categories.map((cat) => (
+                <div
+                  key={cat.id}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-white text-center"
+                  style={{ backgroundColor: cat.color + "33", border: `1px solid ${cat.color}55`, color: cat.color }}
+                >
+                  {cat.name}
+                </div>
+              ))}
             </motion.div>
-            <h1
-              className="text-6xl font-black mb-4 leading-tight"
-              style={{
-                background: "linear-gradient(90deg, #a78bfa, #60a5fa, #f472b6)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
+            <motion.button
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleStartGame}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-2xl px-16 py-5 rounded-2xl shadow-lg shadow-indigo-900/50 transition-colors"
             >
-              МЕНЕДЖМЕНТ
-            </h1>
-            <p className="text-white/60 text-xl mb-2">Викторина для управленцев</p>
-            <p className="text-white/40 text-sm mb-10">6 категорий · 20 вопросов · 200 баллов за вопрос</p>
-            <Button
-              onClick={handleStartClick}
-              className="text-xl px-12 py-6 rounded-2xl font-bold shadow-2xl"
-              style={{
-                background: "linear-gradient(90deg, #6366f1, #8b5cf6)",
-                color: "white",
-                border: "none",
-              }}
-            >
-              Начать игру
-            </Button>
+              НАЧАТЬ ИГРУ
+            </motion.button>
           </motion.div>
         )}
 
-        {/* ИГРОВОЕ ПОЛЕ */}
+        {gameState === "setup" && (
+          <motion.div
+            key="setup"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -30 }}
+            className="flex-1 flex flex-col items-center justify-center px-4 py-12"
+          >
+            <h2 className="text-4xl font-black mb-2 text-center">Назовите своих предпринимателей</h2>
+            <p className="text-gray-400 mb-10 text-center">Введите названия команд (минимум 2)</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full max-w-2xl mb-10">
+              {teams.map((team, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.08 }}
+                  className="flex items-center gap-3"
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-white shrink-0 ${TEAM_COLORS[i].bg}`}>
+                    {i + 1}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder={`Команда ${i + 1}`}
+                    value={team.name}
+                    onChange={(e) =>
+                      setTeams((prev) =>
+                        prev.map((t, idx) => (idx === i ? { ...t, name: e.target.value } : t))
+                      )
+                    }
+                    className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 font-semibold"
+                  />
+                </motion.div>
+              ))}
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleBeginGame}
+              disabled={teams.filter((t) => t.name.trim() !== "").length < 2}
+              className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-black text-xl px-14 py-4 rounded-2xl transition-colors shadow-lg shadow-indigo-900/40"
+            >
+              НАЧАТЬ →
+            </motion.button>
+          </motion.div>
+        )}
+
         {gameState === "board" && (
           <motion.div
             key="board"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="z-10 w-full max-w-6xl px-4 py-6"
+            className="flex-1 flex flex-col p-4 md:p-6"
           >
-            {/* Табло команд */}
-            <div className="flex flex-wrap justify-center gap-3 mb-8">
-              {teams.map((team, i) => (
-                <motion.div
+            <div className="flex flex-wrap gap-3 justify-center mb-6">
+              {teams.filter((t) => t.name.trim() !== "").map((team, i) => (
+                <div
                   key={i}
-                  className="text-center px-6 py-3 rounded-2xl"
-                  style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(10px)" }}
-                  whileHover={{ scale: 1.05 }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl ${TEAM_COLORS[i].light} ${TEAM_COLORS[i].border} border`}
                 >
-                  <div className="text-white/60 text-xs font-medium mb-1">{team.name}</div>
-                  <div className="text-white text-2xl font-black">{team.score}</div>
-                </motion.div>
+                  <span className={`font-bold ${TEAM_COLORS[i].text}`}>{team.name}</span>
+                  <span className={`font-black text-lg ${TEAM_COLORS[i].text}`}>{team.score}</span>
+                </div>
               ))}
             </div>
 
-            {/* Категории и вопросы */}
-            <div className="grid grid-cols-3 gap-3 lg:grid-cols-6">
-              {CATEGORIES.map((cat) => {
-                const questions = QUESTIONS[cat.id];
-                return (
+            <div className="flex-1 overflow-auto">
+              <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${categories.length}, minmax(0, 1fr))` }}>
+                {categories.map((cat) => (
                   <div key={cat.id} className="flex flex-col gap-2">
                     <div
-                      className="rounded-xl p-3 text-center font-bold text-sm text-white"
-                      style={{ background: cat.color + "cc" }}
+                      className="text-center font-black text-sm py-3 px-2 rounded-xl"
+                      style={{ backgroundColor: cat.color + "22", color: cat.color, border: `1px solid ${cat.color}44` }}
                     >
-                      <Icon name={cat.icon} fallback="Target" size={18} className="mx-auto mb-1" />
                       {cat.name}
                     </div>
-                    {questions.map((_, qIdx) => (
-                      <motion.button
-                        key={qIdx}
-                        onClick={() => handleQuestionClick(cat.id, qIdx)}
-                        disabled={isAnswered(cat.id, qIdx)}
-                        whileHover={!isAnswered(cat.id, qIdx) ? { scale: 1.05 } : {}}
-                        whileTap={!isAnswered(cat.id, qIdx) ? { scale: 0.95 } : {}}
-                        className="rounded-xl py-4 text-lg font-black transition-all"
-                        style={{
-                          background: isAnswered(cat.id, qIdx)
-                            ? "rgba(255,255,255,0.05)"
-                            : cat.color,
-                          color: isAnswered(cat.id, qIdx) ? "rgba(255,255,255,0.2)" : "white",
-                          cursor: isAnswered(cat.id, qIdx) ? "not-allowed" : "pointer",
-                          boxShadow: isAnswered(cat.id, qIdx) ? "none" : `0 4px 20px ${cat.color}66`,
-                        }}
-                      >
-                        {isAnswered(cat.id, qIdx) ? "—" : "200"}
-                      </motion.button>
-                    ))}
+                    {cat.questions.map((q) => {
+                      const done = answeredQuestions.has(q.id);
+                      return (
+                        <motion.button
+                          key={q.id}
+                          whileHover={!done ? { scale: 1.04 } : {}}
+                          whileTap={!done ? { scale: 0.96 } : {}}
+                          onClick={() => handleSelectQuestion(cat, q)}
+                          disabled={done}
+                          className={`w-full py-4 rounded-xl font-black text-2xl transition-all ${
+                            done
+                              ? "bg-gray-800 text-gray-700 cursor-default"
+                              : "bg-gray-800 hover:bg-gray-700 text-white shadow-md hover:shadow-lg"
+                          }`}
+                          style={
+                            !done
+                              ? { boxShadow: `0 4px 24px 0 ${cat.color}33` }
+                              : {}
+                          }
+                        >
+                          {done ? "—" : q.points}
+                        </motion.button>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
 
-            <div className="text-center mt-6">
-              <button onClick={resetGame} className="text-white/30 text-sm hover:text-white/60 transition-colors">
-                Начать заново
-              </button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* ЭКРАН ВОПРОСА */}
-        {gameState === "question" && currentQuestion && activeQuestion && (
-          <motion.div
-            key="question"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -40 }}
-            className="z-10 w-full max-w-3xl px-4 py-6"
-          >
-            {/* Категория */}
-            <div className="text-center mb-6">
-              {(() => {
-                const cat = CATEGORIES.find((c) => c.id === activeQuestion.category)!;
-                return (
-                  <span
-                    className="px-4 py-2 rounded-full text-white font-bold text-sm"
-                    style={{ background: cat.color }}
-                  >
-                    {cat.name} · 200 баллов
-                  </span>
-                );
-              })()}
-            </div>
-
-            {/* Вопрос */}
-            <div
-              className="rounded-3xl p-8 mb-6 text-center"
-              style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(20px)" }}
-            >
-              <p className="text-white text-xl font-semibold leading-relaxed">
-                {currentQuestion.question}
-              </p>
-            </div>
-
-            {/* Варианты ответов */}
-            <div className="grid grid-cols-1 gap-3 mb-6">
-              {currentQuestion.options.map((opt) => {
-                const isCorrect = opt === correctAnswer;
-                const isSelected = opt === selectedAnswer;
-                let bg = "rgba(255,255,255,0.07)";
-                let border = "1px solid rgba(255,255,255,0.1)";
-                if (showCorrect && isCorrect) {
-                  bg = "rgba(16,185,129,0.3)";
-                  border = "1px solid #10b981";
-                } else if (showCorrect && isSelected && !isCorrect) {
-                  bg = "rgba(239,68,68,0.3)";
-                  border = "1px solid #ef4444";
-                }
-                return (
-                  <motion.button
-                    key={opt}
-                    onClick={() => handleAnswer(opt)}
-                    whileHover={!showCorrect ? { scale: 1.02 } : {}}
-                    whileTap={!showCorrect ? { scale: 0.98 } : {}}
-                    className="w-full text-left rounded-2xl px-6 py-4 text-white font-medium transition-all"
-                    style={{ background: bg, border }}
-                  >
-                    {opt}
-                    {showCorrect && isCorrect && (
-                      <span className="ml-2 text-green-400">✓</span>
-                    )}
-                    {showCorrect && isSelected && !isCorrect && (
-                      <span className="ml-2 text-red-400">✗</span>
-                    )}
-                  </motion.button>
-                );
-              })}
-            </div>
-
-            {/* Начисление баллов */}
-            {showCorrect && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl p-4 mb-4"
-                style={{ background: "rgba(255,255,255,0.06)" }}
-              >
-                <p className="text-white/70 text-sm text-center mb-3">
-                  {selectedAnswer === correctAnswer
-                    ? "Правильно! Кому начислить 200 баллов?"
-                    : "Неверно. Засчитать баллы команде?"}
-                </p>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {teams.map((team, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleScoreTeam(i)}
-                      disabled={scoringTeam !== null}
-                      className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-all"
-                      style={{
-                        background:
-                          scoringTeam === i
-                            ? "#10b981"
-                            : scoringTeam !== null
-                            ? "rgba(255,255,255,0.1)"
-                            : "#6366f1",
-                        cursor: scoringTeam !== null ? "not-allowed" : "pointer",
-                      }}
-                    >
-                      {team.name}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => setScoringTeam(-1)}
-                    disabled={scoringTeam !== null}
-                    className="px-4 py-2 rounded-xl text-sm font-bold transition-all"
-                    style={{
-                      background: scoringTeam === -1 ? "#ef4444" : "rgba(255,255,255,0.1)",
-                      color: "white",
-                      cursor: scoringTeam !== null ? "not-allowed" : "pointer",
-                    }}
-                  >
-                    Никому
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {(scoringTeam !== null || showCorrect) && (
-              <div className="text-center">
-                <Button
-                  onClick={handleCloseQuestion}
-                  className="px-8 py-3 rounded-2xl font-bold text-white"
-                  style={{ background: "#6366f1" }}
+            {allAnswered && (
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => setGameState("results")}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xl px-12 py-4 rounded-2xl"
                 >
-                  Вернуться к доске
-                </Button>
+                  РЕЗУЛЬТАТЫ
+                </button>
               </div>
             )}
           </motion.div>
         )}
 
-        {/* РЕЗУЛЬТАТЫ */}
-        {gameState === "result" && (
+        {gameState === "question" && activeQuestion && (
           <motion.div
-            key="result"
-            initial={{ opacity: 0, scale: 0.9 }}
+            key="question"
+            initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="z-10 text-center px-6 max-w-lg w-full"
+            exit={{ opacity: 0, scale: 0.92 }}
+            className="flex-1 flex flex-col items-center justify-center px-4 py-10 max-w-3xl mx-auto w-full"
           >
-            <div className="text-6xl mb-4">🎉</div>
-            <h2
-              className="text-4xl font-black mb-8"
+            <div
+              className="text-sm font-black uppercase tracking-widest mb-4 px-4 py-1 rounded-full"
               style={{
-                background: "linear-gradient(90deg, #fbbf24, #f59e0b)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
+                backgroundColor: activeQuestion.category.color + "22",
+                color: activeQuestion.category.color,
               }}
             >
-              Игра завершена!
-            </h2>
-            <div className="space-y-3 mb-8">
-              {[...teams]
-                .sort((a, b) => b.score - a.score)
-                .map((team, i) => (
-                  <motion.div
-                    key={team.name}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="flex items-center justify-between rounded-2xl px-6 py-4"
-                    style={{
-                      background:
-                        i === 0
-                          ? "linear-gradient(90deg, rgba(251,191,36,0.2), rgba(245,158,11,0.1))"
-                          : "rgba(255,255,255,0.07)",
-                      border: i === 0 ? "1px solid rgba(251,191,36,0.4)" : "1px solid rgba(255,255,255,0.1)",
-                    }}
-                  >
-                    <span className="text-white font-bold text-lg">
-                      {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "4."} {team.name}
-                    </span>
-                    <span className="text-white font-black text-2xl">{team.score}</span>
-                  </motion.div>
-                ))}
+              {activeQuestion.category.name} · {activeQuestion.question.points} баллов
             </div>
-            <Button
-              onClick={resetGame}
-              className="px-10 py-4 rounded-2xl font-bold text-white text-lg"
-              style={{ background: "linear-gradient(90deg, #6366f1, #8b5cf6)" }}
+
+            <h2 className="text-3xl font-black text-center mb-10 leading-snug">
+              {activeQuestion.question.text}
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mb-8">
+              {activeQuestion.question.options.map((opt) => {
+                const isCorrect = opt.label === activeQuestion.question.correctAnswer;
+                const isSelected = opt.label === selectedAnswer;
+                let btnClass = "bg-gray-800 border border-gray-700 hover:bg-gray-700 text-white";
+                if (showResult) {
+                  if (isCorrect) btnClass = "bg-emerald-600 border border-emerald-500 text-white";
+                  else if (isSelected && !isCorrect) btnClass = "bg-red-700 border border-red-600 text-white";
+                  else btnClass = "bg-gray-800 border border-gray-700 text-gray-500";
+                }
+                return (
+                  <motion.button
+                    key={opt.label}
+                    whileHover={!showResult ? { scale: 1.03 } : {}}
+                    whileTap={!showResult ? { scale: 0.97 } : {}}
+                    onClick={() => handleSelectAnswer(opt.label)}
+                    disabled={showResult}
+                    className={`flex items-start gap-3 text-left px-5 py-4 rounded-xl font-semibold transition-all ${btnClass}`}
+                  >
+                    <span className="font-black text-lg shrink-0">{opt.label})</span>
+                    <span>{opt.text}</span>
+                  </motion.button>
+                );
+              })}
+            </div>
+
+            {showResult && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full"
+              >
+                <div className="text-center mb-6">
+                  {selectedAnswer === activeQuestion.question.correctAnswer ? (
+                    <p className="text-emerald-400 font-black text-2xl">Правильно!</p>
+                  ) : (
+                    <p className="text-red-400 font-black text-2xl">Неверно!</p>
+                  )}
+                </div>
+
+                <p className="text-center text-gray-400 font-semibold mb-4">Кому начислить {activeQuestion.question.points} баллов?</p>
+                <div className="flex flex-wrap gap-3 justify-center mb-6">
+                  {teams.filter((t) => t.name.trim() !== "").map((team, i) => (
+                    <motion.button
+                      key={i}
+                      whileHover={scoringTeam === null ? { scale: 1.05 } : {}}
+                      whileTap={scoringTeam === null ? { scale: 0.95 } : {}}
+                      onClick={() => handleAwardPoints(i)}
+                      disabled={scoringTeam !== null}
+                      className={`px-5 py-2 rounded-xl font-black transition-all ${
+                        scoringTeam === i
+                          ? `${TEAM_COLORS[i].bg} text-white ring-2 ring-white`
+                          : scoringTeam !== null
+                          ? "bg-gray-800 text-gray-500 cursor-default"
+                          : `${TEAM_COLORS[i].bg} text-white`
+                      }`}
+                    >
+                      {team.name}
+                    </motion.button>
+                  ))}
+                  <motion.button
+                    whileHover={scoringTeam === null ? { scale: 1.05 } : {}}
+                    whileTap={scoringTeam === null ? { scale: 0.95 } : {}}
+                    onClick={() => setScoringTeam(-1)}
+                    disabled={scoringTeam !== null}
+                    className={`px-5 py-2 rounded-xl font-black transition-all ${
+                      scoringTeam === -1
+                        ? "bg-gray-600 text-white ring-2 ring-white"
+                        : scoringTeam !== null
+                        ? "bg-gray-800 text-gray-500 cursor-default"
+                        : "bg-gray-700 text-white hover:bg-gray-600"
+                    }`}
+                  >
+                    Никому
+                  </motion.button>
+                </div>
+
+                {scoringTeam !== null && (
+                  <div className="text-center">
+                    <button
+                      onClick={handleCloseQuestion}
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-lg px-12 py-3 rounded-xl transition-colors"
+                    >
+                      К ДОСКЕ →
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+
+        {gameState === "results" && (
+          <motion.div
+            key="results"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex-1 flex flex-col items-center justify-center px-4 py-12"
+          >
+            <h2 className="text-5xl font-black mb-2 text-center">Итоги</h2>
+            <p className="text-gray-400 mb-12 text-center">Финальная таблица результатов</p>
+
+            <div className="w-full max-w-lg flex flex-col gap-4 mb-12">
+              {sortedTeams.map((team, i) => (
+                <motion.div
+                  key={team.originalIndex}
+                  initial={{ opacity: 0, x: -30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className={`flex items-center gap-4 px-6 py-4 rounded-2xl ${
+                    i === 0 ? "bg-amber-900/40 border border-amber-500/40" : "bg-gray-800 border border-gray-700"
+                  }`}
+                >
+                  <span className={`text-3xl font-black w-8 text-center ${i === 0 ? "text-amber-400" : "text-gray-500"}`}>
+                    {i + 1}
+                  </span>
+                  <div className={`w-3 h-10 rounded-full ${TEAM_COLORS[team.originalIndex].bg}`} />
+                  <span className="font-black text-xl flex-1">{team.name}</span>
+                  <span className={`font-black text-2xl ${i === 0 ? "text-amber-400" : "text-white"}`}>
+                    {team.score}
+                  </span>
+                </motion.div>
+              ))}
+            </div>
+
+            {sortedTeams.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="text-center mb-10"
+              >
+                <div className="text-6xl mb-2">🏆</div>
+                <p className="text-2xl font-black text-amber-400">Победитель: {sortedTeams[0].name}!</p>
+              </motion.div>
+            )}
+
+            <button
+              onClick={handleRestart}
+              className="bg-gray-800 hover:bg-gray-700 text-white font-black text-lg px-12 py-4 rounded-2xl border border-gray-600 transition-colors"
             >
-              Играть снова
-            </Button>
+              ИГРАТЬ СНОВА
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* ДИАЛОГ — ВВОД КОМАНД */}
-      <Dialog open={setupOpen} onOpenChange={setSetupOpen}>
-        <DialogContent
-          className="rounded-3xl border-0 max-w-md"
-          style={{ background: "linear-gradient(135deg, #1e1b4b, #312e81)", color: "white" }}
-        >
-          <DialogHeader>
-            <DialogTitle className="text-white text-2xl font-black text-center mb-2">
-              Назовите команды предпринимателей
-            </DialogTitle>
-            <p className="text-white/50 text-sm text-center">Введите названия (минимум 2)</p>
-          </DialogHeader>
-          <div className="space-y-3 mt-4">
-            {teamNames.map((name, i) => (
-              <Input
-                key={i}
-                placeholder={`Команда ${i + 1}`}
-                value={name}
-                onChange={(e) =>
-                  setTeamNames((prev) => prev.map((n, idx) => (idx === i ? e.target.value : n)))
-                }
-                className="rounded-xl border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-purple-400"
-              />
-            ))}
-          </div>
-          <Button
-            onClick={handleSetupConfirm}
-            disabled={teamNames.filter((n) => n.trim()).length < 2}
-            className="w-full mt-4 py-4 rounded-2xl font-bold text-white text-lg"
-            style={{ background: "linear-gradient(90deg, #6366f1, #8b5cf6)" }}
-          >
-            Начать игру!
-          </Button>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
