@@ -62,6 +62,8 @@ export default function ManagementGame() {
 
   const handleAwardPoints = (teamIndex: number) => {
     if (scoringTeam !== null || !activeQuestion) return;
+    const isCorrect = selectedAnswer === activeQuestion.question.correctAnswer;
+    if (!isCorrect) return;
     setScoringTeam(teamIndex);
     setTeams((prev) =>
       prev.map((t, i) =>
@@ -338,42 +340,40 @@ export default function ManagementGame() {
                   )}
                 </div>
 
-                <p className="text-center text-gray-400 font-semibold mb-4">Кому начислить {activeQuestion.question.points} баллов?</p>
-                <div className="flex flex-wrap gap-3 justify-center mb-6">
-                  {teams.filter((t) => t.name.trim() !== "").map((team, i) => (
-                    <motion.button
-                      key={i}
-                      whileHover={scoringTeam === null ? { scale: 1.05 } : {}}
-                      whileTap={scoringTeam === null ? { scale: 0.95 } : {}}
-                      onClick={() => handleAwardPoints(i)}
-                      disabled={scoringTeam !== null}
-                      className={`px-5 py-2 rounded-xl font-black transition-all ${
-                        scoringTeam === i
-                          ? `${TEAM_COLORS[i].bg} text-white ring-2 ring-white`
-                          : scoringTeam !== null
-                          ? "bg-gray-800 text-gray-500 cursor-default"
-                          : `${TEAM_COLORS[i].bg} text-white`
-                      }`}
+                {selectedAnswer === activeQuestion.question.correctAnswer ? (
+                  <>
+                    <p className="text-center text-gray-400 font-semibold mb-4">Кому начислить {activeQuestion.question.points} баллов?</p>
+                    <div className="flex flex-wrap gap-3 justify-center mb-6">
+                      {teams.filter((t) => t.name.trim() !== "").map((team, i) => (
+                        <motion.button
+                          key={i}
+                          whileHover={scoringTeam === null ? { scale: 1.05 } : {}}
+                          whileTap={scoringTeam === null ? { scale: 0.95 } : {}}
+                          onClick={() => handleAwardPoints(i)}
+                          disabled={scoringTeam !== null}
+                          className={`px-5 py-2 rounded-xl font-black transition-all ${
+                            scoringTeam === i
+                              ? `${TEAM_COLORS[i].bg} text-white ring-2 ring-white`
+                              : scoringTeam !== null
+                              ? "bg-gray-800 text-gray-500 cursor-default"
+                              : `${TEAM_COLORS[i].bg} text-white`
+                          }`}
+                        >
+                          {team.name}
+                        </motion.button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-center mb-6">
+                    <button
+                      onClick={() => setScoringTeam(-1)}
+                      className="bg-gray-700 hover:bg-gray-600 text-white font-black text-lg px-12 py-3 rounded-xl transition-colors"
                     >
-                      {team.name}
-                    </motion.button>
-                  ))}
-                  <motion.button
-                    whileHover={scoringTeam === null ? { scale: 1.05 } : {}}
-                    whileTap={scoringTeam === null ? { scale: 0.95 } : {}}
-                    onClick={() => setScoringTeam(-1)}
-                    disabled={scoringTeam !== null}
-                    className={`px-5 py-2 rounded-xl font-black transition-all ${
-                      scoringTeam === -1
-                        ? "bg-gray-600 text-white ring-2 ring-white"
-                        : scoringTeam !== null
-                        ? "bg-gray-800 text-gray-500 cursor-default"
-                        : "bg-gray-700 text-white hover:bg-gray-600"
-                    }`}
-                  >
-                    Никому
-                  </motion.button>
-                </div>
+                      Продолжить
+                    </button>
+                  </div>
+                )}
 
                 {scoringTeam !== null && (
                   <div className="text-center">
